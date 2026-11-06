@@ -1,0 +1,12 @@
+checkpoints
+data/train.bin
+data/validation.bin
+tokenizer/tokenizer.json
+**/raw.txt
+**/validation.txt
+
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+EOF
