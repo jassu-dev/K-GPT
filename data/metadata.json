@@ -1,18 +1,10 @@
 {
-  "vocab_size": 8000,
-  "eos_token": "[EOS]",
-  "eos_token_id": 1,
-  "dtype": "uint16",
-  "splits": {
-    "train": {
-      "stories": 1604665,
-      "tokens": 65425864,
-      "file": "train.bin"
-    },
-    "validation": {
-      "stories": 22860,
-      "tokens": 966415,
-      "file": "validation.bin"
-    }
-  }
+    "vocab_size": 8000,
+    "eos_token": "[EOS]",
+    "eos_token_id": 1,
+    "train_documents": 200000,
+    "validation_documents": 10000,
+    "train_tokens": 308832275,
+    "validation_tokens": 15450254,
+    "dtype": "uint16"
 }

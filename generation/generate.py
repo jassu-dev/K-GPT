@@ -13,14 +13,14 @@ ROOT = Path(__file__).resolve().parents[1]
 
 TOKENIZER_PATH = ROOT / "tokenizer" / "tokenizer.json"
 METADATA_PATH = ROOT / "data" / "metadata.json"
-CHECKPOINT_PATH = ROOT / "checkpoints" / "gpt_step_10000.pt"
+CHECKPOINT_PATH = ROOT / "checkpoints" / "gpt_step_9000.pt"
 
 # Model configuration
-D_MODEL = 384
-NUM_LAYERS = 6
-NUM_HEADS = 6
-HIDDEN_DIM = 1024
-CONTEXT_LENGTH = 256
+D_MODEL = 512
+NUM_LAYERS = 12
+NUM_HEADS = 8
+HIDDEN_DIM = 1376
+CONTEXT_LENGTH = 512
 
 # Generation configuration
 MAX_NEW_TOKENS = 150
@@ -178,8 +178,7 @@ def main():
     print("Device:", device)
 
     prompts = [
-        "Once upon a time, there was a little boy who",
-        "The meaning of friendship is",
+        "the computer science "
     ]
 
     for prompt in prompts:

@@ -18,7 +18,6 @@ def train_tokenizer():
             f"Dataset not found: {CORPUS_PATH}\n"
             "Run data/download_dataset.py first."
         )
-
     tokenizer = Tokenizer(models.BPE(unk_token=UNK_TOKEN))
 
     # Preserve byte-level coverage, including unusual characters.

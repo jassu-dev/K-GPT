@@ -16,7 +16,7 @@ DATA_DIR = ROOT / "data"
 CHECKPOINT_DIR = ROOT / "checkpoints"
 
 # Training settings
-BATCH_SIZE = 16
+BATCH_SIZE = 64
 LEARNING_RATE = 3e-4
 WEIGHT_DECAY = 0.1
 MAX_STEPS = 10_000
@@ -25,11 +25,11 @@ EVAL_BATCHES = 50
 GRAD_CLIP = 1.0
 
 # Model settings
-D_MODEL = 384
-NUM_LAYERS = 6
-NUM_HEADS = 6
-HIDDEN_DIM = 1024
-CONTEXT_LENGTH = 256
+D_MODEL = 512
+NUM_LAYERS = 12
+NUM_HEADS = 8
+HIDDEN_DIM = 1376
+CONTEXT_LENGTH = 512
 
 
 def get_loss(model, x, y, device):
