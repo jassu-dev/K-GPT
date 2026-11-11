@@ -1,86 +1,120 @@
-from pathlib import Path
 import json
+from pathlib import Path
 import numpy as np
 from tokenizers import Tokenizer
 from tqdm import tqdm
 
-
-# Project paths
 ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / "data"
 TOKENIZER_PATH = ROOT / "tokenizer" / "tokenizer.json"
 
-TRAIN_TEXT_PATH = DATA_DIR / "raw.txt"
-VAL_TEXT_PATH = DATA_DIR / "validation.txt"
+TRAIN_TEXT_PATH = DATA_DIR / "train_raw.txt"
+VAL_TEXT_PATH = DATA_DIR / "val_raw.txt"
 
 TRAIN_BIN_PATH = DATA_DIR / "train.bin"
 VAL_BIN_PATH = DATA_DIR / "validation.bin"
 
 METADATA_PATH = DATA_DIR / "metadata.json"
 
-
 # Load tokenizer
 tokenizer = Tokenizer.from_file(str(TOKENIZER_PATH))
 
-# IMPORTANT: Use the EOS token registered in your existing tokenizer.
+# Match the registered special token in your tokenizer
 EOS_TOKEN = "[EOS]"
 EOS_ID = tokenizer.token_to_id(EOS_TOKEN)
 
+# Fallback check if EOS was saved as <|endoftext|>
+if EOS_ID is None:
+    EOS_TOKEN = "<|endoftext|>"
+    EOS_ID = tokenizer.token_to_id(EOS_TOKEN)
+
 if EOS_ID is None:
     raise ValueError(
-        f"{EOS_TOKEN} is not present in the tokenizer. "
-        "Check your tokenizer's registered special tokens."
+        "Could not find '[EOS]' or '<|endoftext|>' in tokenizer vocabulary. "
+        "Verify your special tokens in tokenizer.json."
     )
 
 
-def read_documents(file_path):
-    """Read documents separated by blank lines."""
+def iter_documents(file_path):
+    """Yields documents one at a time to keep RAM consumption near zero."""
+    buffer = []
+    with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+        for line in f:
+            stripped = line.strip()
+            # Delimiter checks: custom end-of-text marker or empty double line
+            if stripped == "<|endoftext|>" or stripped == "[EOS]":
+                if buffer:
+                    yield "".join(buffer).strip()
+                    buffer = []
+            elif stripped == "" and buffer:
+                yield "".join(buffer).strip()
+                buffer = []
+            else:
+                buffer.append(line)
 
-    with open(file_path, "r", encoding="utf-8") as f:
-        text = f.read()
-
-    documents = [
-        doc.strip()
-        for doc in text.split("\n\n")
-        if doc.strip()
-    ]
-
-    return documents
+        # Yield any trailing content
+        if buffer:
+            doc = "".join(buffer).strip()
+            if doc:
+                yield doc
 
 
-def prepare_dataset(input_path, output_path):
-    """Tokenize documents, append EOS, and save as uint16."""
+def prepare_dataset(input_path, output_path, batch_flush_size=10_000):
+    """Tokenizes on the fly and streams binary tokens directly to disk."""
+    if not input_path.exists():
+        raise FileNotFoundError(f"Missing input file: {input_path}")
 
-    documents = read_documents(input_path)
+    total_tokens = 0
+    total_docs = 0
 
-    all_tokens = []
+    chunk_tokens = []
 
-    for document in tqdm(documents, desc=f"Processing {input_path.name}"):
+    # Open binary file in append/write mode
+    with open(output_path, "wb") as out_f:
+        pbar = tqdm(desc=f"Processing {input_path.name}", unit="docs")
 
-        token_ids = tokenizer.encode(document).ids
+        for doc in iter_documents(input_path):
+            if not doc:
+                continue
 
-        if not token_ids:
-            continue
+            ids = tokenizer.encode(doc).ids
+            if not ids:
+                continue
 
-        token_ids.append(EOS_ID)
+            ids.append(EOS_ID)
+            chunk_tokens.extend(ids)
+            total_docs += 1
 
-        all_tokens.extend(token_ids)
+            # Flush to disk every 10,000 tokens to keep RAM minimal
+            if len(chunk_tokens) >= batch_flush_size:
+                arr = np.array(chunk_tokens, dtype=np.uint16)
+                arr.tofile(out_f)
+                total_tokens += len(chunk_tokens)
+                chunk_tokens = []
 
-    token_array = np.array(all_tokens, dtype=np.uint16)
+            pbar.update(1)
 
-    token_array.tofile(output_path)
+        # Flush any remaining tokens in buffer
+        if chunk_tokens:
+            arr = np.array(chunk_tokens, dtype=np.uint16)
+            arr.tofile(out_f)
+            total_tokens += len(chunk_tokens)
+            chunk_tokens = []
 
+        pbar.close()
+
+    file_size_mb = output_path.stat().st_size / (1024**2)
     print(f"\nSaved: {output_path}")
-    print(f"Documents: {len(documents)}")
-    print(f"Tokens: {len(token_array):,}")
-    print(f"File size: {output_path.stat().st_size / (1024**2):.2f} MB")
+    print(f"Documents: {total_docs:,}")
+    print(f"Tokens: {total_tokens:,}")
+    print(f"File size: {file_size_mb:.2f} MB\n")
 
-    return len(documents), len(token_array)
+    return total_docs, total_tokens
 
 
 def main():
-
-    print("Loading and preparing datasets...\n")
+    print(f"Tokenizer vocab size: {tokenizer.get_vocab_size()}")
+    print(f"Using EOS token: {EOS_TOKEN} (ID: {EOS_ID})\n")
 
     train_docs, train_tokens = prepare_dataset(
         TRAIN_TEXT_PATH,
@@ -106,8 +140,8 @@ def main():
     with open(METADATA_PATH, "w", encoding="utf-8") as f:
         json.dump(metadata, f, indent=4)
 
-    print("\nDataset preparation complete!")
-    print("Metadata saved:", METADATA_PATH)
+    print("Dataset preparation complete!")
+    print(f"Metadata saved: {METADATA_PATH}")
 
 
 if __name__ == "__main__":

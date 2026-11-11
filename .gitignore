@@ -2,8 +2,8 @@ checkpoints
 data/train.bin
 data/validation.bin
 tokenizer/tokenizer.json
-**/raw.txt
-**/validation.txt
+**/train_raw.txt
+**/val_raw.txt
 
 __pycache__/
 *.py[cod]

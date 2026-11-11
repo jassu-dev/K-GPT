@@ -9,8 +9,8 @@ from torch.utils.data import Dataset, DataLoader
 ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / "data"
 
-CONTEXT_LENGTH = 256
-BATCH_SIZE = 16
+CONTEXT_LENGTH = 512
+BATCH_SIZE = 4
 
 
 class GPTDataset(Dataset):

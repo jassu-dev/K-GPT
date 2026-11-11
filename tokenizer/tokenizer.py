@@ -4,7 +4,7 @@ from pathlib import Path
 from tokenizers import Tokenizer, models, pre_tokenizers, decoders, trainers
 
 ROOT = Path(__file__).resolve().parents[1]
-CORPUS_PATH = ROOT / "data" / "raw.txt"
+CORPUS_PATH = ROOT / "data" / "train_raw.txt"
 TOKENIZER_PATH = ROOT / "tokenizer" / "tokenizer.json"
 
 VOCAB_SIZE = 8000

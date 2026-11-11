@@ -2,9 +2,9 @@
     "vocab_size": 8000,
     "eos_token": "[EOS]",
     "eos_token_id": 1,
-    "train_documents": 200000,
+    "train_documents": 490007,
     "validation_documents": 10000,
-    "train_tokens": 308832275,
-    "validation_tokens": 15450254,
+    "train_tokens": 584547709,
+    "validation_tokens": 11719014,
     "dtype": "uint16"
 }
